@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.Controller">
+
+    <top>
+        <VBox>
+            <MenuBar>
+                <Menu text="File">
+                    <MenuItem text="Load Image..."   onAction="#onLoadImage"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Reset"           onAction="#onReset"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Exit"            onAction="#onExit"/>
+                </Menu>
+                <Menu text="Process">
+                    <MenuItem text="Convert to B/W" onAction="#onConvertToBW"/>
+                    <MenuItem text="Detect Leaves"   onAction="#onDetectLeaves"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Show TSP Path"   onAction="#onShowTspPath"/>
+                </Menu>
+                <Menu text="View">
+                    <CheckMenuItem fx:id="showLabelsMenuItem"
+                                   text="Show Cluster Numbers"
+                                   selected="true"
+                                   onAction="#onToggleLabels"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Colour All Disjoint Sets" onAction="#onColorAllDisjointSets"/>
+                    <MenuItem text="Restore B/W View"         onAction="#onRevertBwView"/>
+                </Menu>
+                <Menu text="Noise">
+                    <CheckMenuItem fx:id="iqrFilterMenuItem"
+                                   text="Apply IQR Outlier Filter"
+                                   selected="false"/>
+                </Menu>
+            </MenuBar>
+
+            <ToolBar>
+                <Button text="Load Image"      onAction="#onLoadImage"/>
+                <Separator/>
+                <Button text="Convert to B/W"  onAction="#onConvertToBW"/>
+                <Button text="Detect Leaves"   onAction="#onDetectLeaves"/>
+                <Button text="Show TSP Path"   onAction="#onShowTspPath"/>
+                <Separator/>
+                <Button text="Colour All Sets" onAction="#onColorAllDisjointSets"/>
+                <Button text="Restore B/W"     onAction="#onRevertBwView"/>
+            </ToolBar>
+        </VBox>
+    </top>
+
+    <center>
+        <SplitPane dividerPositions="0.42, 0.76">
+
+
+            <VBox spacing="4">
+                <padding><Insets top="8" right="6" bottom="4" left="8"/></padding>
+                <Label text="Original Image" style="-fx-font-weight:bold;"/>
+                <Label text="Left-click: inspect cluster  |  Right-click: set TSP start  |  Sample mode: pick colour"
+                       style="-fx-font-size:10;"/>
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                    <content>
+                        <ImageView fx:id="originalView" preserveRatio="true"
+                                   fitWidth="580" fitHeight="460"/>
+                    </content>
+                </ScrollPane>
+            </VBox>
+
+
+            <VBox spacing="4">
+                <padding><Insets top="8" right="6" bottom="4" left="6"/></padding>
+                <Label text="B/W / Disjoint Sets" style="-fx-font-weight:bold;"/>
+                <Label text="Left-click: highlight cluster pixels in this view"
+                       style="-fx-font-size:10;"/>
+                <ScrollPane fitToWidth="true" fitToHeight="true" VBox.vgrow="ALWAYS">
+                    <content>
+                        <ImageView fx:id="bwView" preserveRatio="true"
+                                   fitWidth="480" fitHeight="460"/>
+                    </content>
+                </ScrollPane>
+            </VBox>
+
+            <!-- Right: Controls Panel -->
+            <ScrollPane fitToWidth="true">
+                <content>
+                    <VBox spacing="10">
+                        <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+
+                        <!-- Leaf Colours -->
+                        <Label text="Leaf Colours" style="-fx-font-weight:bold;"/>
+                        <ListView fx:id="colorListView" prefHeight="110"/>
+                        <HBox spacing="6">
+                            <Button text="+ Sample" onAction="#onSampleColor"/>
+                            <Button text="- Remove"  onAction="#onRemoveColor"/>
+                            <Button text="Clear"     onAction="#onClearColors"/>
+                        </HBox>
+
+                        <Separator/>
+
+                        <!-- B/W Thresholds -->
+                        <Label text="B/W Thresholds" style="-fx-font-weight:bold;"/>
+
+                        <Label text="Colour Distance:" style="-fx-font-size:11;"/>
+                        <Slider fx:id="distanceSlider" min="0.03" max="0.8" value="0.25"
+                                showTickLabels="true" majorTickUnit="0.2"/>
+
+                        <Label text="Hue Tolerance (degrees):" style="-fx-font-size:11;"/>
+                        <Slider fx:id="hueToleranceSlider" min="5" max="80" value="30"
+                                showTickLabels="true" majorTickUnit="20"/>
+
+                        <Label text="Min Saturation:" style="-fx-font-size:11;"/>
+                        <Slider fx:id="satMinSlider" min="0.0" max="0.6" value="0.15"
+                                showTickLabels="true" majorTickUnit="0.2"/>
+
+                        <Label text="Min Brightness:" style="-fx-font-size:11;"/>
+                        <Slider fx:id="briMinSlider" min="0.0" max="0.6" value="0.15"
+                                showTickLabels="true" majorTickUnit="0.2"/>
+
+                        <Separator/>
+
+                        <!-- Cluster Size Filter -->
+                        <Label text="Cluster Size Filter" style="-fx-font-weight:bold;"/>
+
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Min pixels:" style="-fx-font-size:11;"/>
+                            <TextField fx:id="minSizeField" prefWidth="70" text="30"/>
+                        </HBox>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Max pixels (0 = no limit):" style="-fx-font-size:11;"/>
+                            <TextField fx:id="maxSizeField" prefWidth="70" text="0"/>
+                        </HBox>
+
+                        <CheckBox fx:id="iqrFilterCheckBox" text="Apply IQR Outlier Filter"/>
+
+                        <Separator/>
+
+                        <!-- Stats -->
+                        <Label text="Stats" style="-fx-font-weight:bold;"/>
+                        <Label fx:id="clusterCountLabel" text="Clusters detected: —"/>
+                        <Label fx:id="selectedInfoLabel" text="Selected: —"/>
+                        <Label fx:id="imageSizeLabel"    text="Image size: —"/>
+
+                        <Separator/>
+
+                        <!-- TSP -->
+                        <Label text="TSP Path" style="-fx-font-weight:bold;"/>
+                        <Label text="Right-click a cluster to set the TSP start point, then use Process > Show TSP Path."
+                               wrapText="true" style="-fx-font-size:10;"/>
+
+                    </VBox>
+                </content>
+            </ScrollPane>
+
+        </SplitPane>
+    </center>
+
+    <!-- ================================================================ -->
+    <!-- BOTTOM — status bar                                               -->
+    <!-- ================================================================ -->
+    <bottom>
+        <HBox style="-fx-padding:5 10 5 10; -fx-border-color:#cccccc; -fx-border-width:1 0 0 0;">
+            <Label fx:id="statusLabel" text="Ready. Load an image to begin."/>
+        </HBox>
+    </bottom>
+
+</BorderPane>
